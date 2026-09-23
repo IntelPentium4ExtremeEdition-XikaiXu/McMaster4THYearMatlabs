@@ -42,7 +42,7 @@ for i = 1:size(Matrix, 1)
     xlabel('Sample Number n');
     ylabel('Amplitude x[n]');
 
-    title(sprintf('Case %c: A = %.0f, f = %.0f Hz, φ = %.2f rad', ...
+    title(sprintf('Case %c: A = %.0f, f = %.0f Hz, theta = %.2f rad', ...
         char('A' + i - 1), A, f, theta));
     grid on;
 end
@@ -70,14 +70,13 @@ x1 = unitstep(n - 14) - unitstep(n - 15);
 % Exercise 2(c)
 x2 = unitstep(n - 9) - unitstep(n - 16);
 
-% Create plots
+% create plots
 figure;
-
 subplot(2, 2, 1);
 stem(n, ydelta, "filled");
 xlabel("Sample Number n");
-ylabel("\delta[n-16]");
-title("Unit Impulse \delta[n-16]");
+ylabel("delta[n-16]");
+title("Unit Impulse delta[n-16]");
 grid on;
 xlim([1 30]);
 ylim([-0.1 1.2]);
@@ -91,6 +90,26 @@ grid on;
 xlim([1 30]);
 ylim([-0.1 1.2])
 
+
+subplot(2, 2, 3);
+stem(n, x1, "filled");
+xlabel("Sample Number n");
+ylabel("u[n-12]");
+title("x1 = unitstep(n - 14) - unitstep(n - 15);");
+grid on;
+xlim([1 30]);
+ylim([-0.1 1.2])
+
+subplot(2, 2, 4);
+stem(n, x2, "filled");
+xlabel("Sample Number n");
+ylabel("u[n-12]");
+title("x2 = unitstep(n - 9) - unitstep(n - 16);");
+grid on;
+xlim([1 30]);
+ylim([-0.1 1.2])
+
+
 %% Exercise 3: Complex signals
 
 % Parameters
@@ -101,7 +120,7 @@ n = 1:40;
 % Generate the complex-valued signal
 x_complex = A * exp(1j * omega * n);
 
-%% Exercise 3(a): Complex-plane plot
+% Exercise 3(a): Complex-plane plot
 
 figure;
 
@@ -109,12 +128,12 @@ plot(real(x_complex), imag(x_complex), "o-");
 
 xlabel("Real Part, Re\{x[n]\}");
 ylabel("Imaginary Part, Im\{x[n]\}");
-title("Complex-Plane Plot of x[n] = Ae^{j\omega n}");
+title("Complex-Plane Plot of x[n]");
 
 grid on;
 axis equal;
 
-%% Exercise 3(b): Real and imaginary parts
+% Exercise 3(b): Real and imaginary parts
 
 figure;
 
@@ -142,7 +161,7 @@ unwrapped_phase = unwrap(wrapped_phase);
 
 figure;
 
-subplot(2, 1, 1);
+subplot(3, 1, 1);
 stem(n, magnitude, "filled");
 xlabel("Sample Number n");
 ylabel("|x[n]|");
@@ -150,7 +169,17 @@ title("Magnitude of x[n]");
 grid on;
 ylim([0 1.2]);
 
-subplot(2, 1, 2);
+subplot(3, 1,2);
+stem(n, wrapped_phase, "filled");
+xlabel("Sample Number n");
+ylabel("Phase (rad)");
+title("wrapped Phase of x[n]");
+grid on;
+
+sgtitle("Exercise 3(c): Magnitude and Phase");
+
+
+subplot(3, 1, 3);
 stem(n, unwrapped_phase, "filled");
 xlabel("Sample Number n");
 ylabel("Phase (rad)");
@@ -164,19 +193,11 @@ sgtitle("Exercise 3(c): Magnitude and Phase");
 % Part A: Read the audio file
 [MusicY, Musicfs] = audioread('defineit.wav');
 
-% If the audio is stereo, convert it to mono
-if size(MusicY, 2) > 1
-MusicY = mean(MusicY, 2);
-end
-
-% Create the time axis
-audioTime = (0:length(MusicY)-1) / Musicfs;
-
 figure;
 
 subplot(2, 1, 1);
-plot(audioTime, MusicY);
-xlabel("Time (s)");
+plot(MusicY);
+xlabel("Samples");
 ylabel("Amplitude");
 title("Original Speech Waveform");
 grid on;
@@ -197,24 +218,14 @@ disp(info);
 
 soundsc(MusicY, Musicfs);
 
-% Optional pause so the next audio does not immediately interrupt it
-pause(length(MusicY) / Musicfs + 1);
-
-
 peakAmplitude = max(abs(MusicY));
-
-if peakAmplitude == 0
-y_scaled = MusicY;
-else
 y_scaled = MusicY / peakAmplitude;
-end
-
 
 % Apply rounding quantization
 % Part F: 3-bit Level-1 uniform quantizer
 
 numberOfBits = 3;
-numLevels = 2^numberOfBits; % 8 levels
+numLevels = 2^numberOfBits; % 8 bins
 deltaQ = 2 / numLevels; % Delta = 0.25
 
 % Level-1 mid-rise uniform quantization
@@ -224,28 +235,26 @@ y3bit = deltaQ * (floor(y_scaled / deltaQ) + 0.5);
 y3bit(y3bit > 0.875) = 0.875;
 y3bit(y3bit < -0.875) = -0.875;
 
-
 e = y_scaled - y3bit;
-
 
 figure;
 subplot(2, 2, 1);
-plot(audioTime, y_scaled);
-xlabel("Time (s)");
+plot( y_scaled);
+xlabel("Samples");
 ylabel("Amplitude");
 title("Scaled Speech Signal");
 grid on;
 
 subplot(2, 2, 2);
-histogram(y_scaled, 50);
+histogram( y_scaled);
 xlabel("Amplitude");
 ylabel("Number of Samples");
 title("Histogram of Scaled Speech Signal");
 grid on;
 
 subplot(2, 2, 3);
-plot(audioTime, y3bit);
-xlabel("Time (s)");
+plot( y3bit);
+xlabel("Samples");
 ylabel("Quantized Amplitude");
 title("3-Bit Quantized Speech Signal");
 grid on;
@@ -259,8 +268,8 @@ grid on;
 
 figure;
 subplot(2, 1, 1);
-plot(audioTime, e);
-xlabel("Time (s)");
+plot( e);
+xlabel("Samples");
 ylabel("Error");
 title("Quantization Error: e = y_{scaled} - y_{3bit}");
 grid on;
@@ -273,96 +282,67 @@ title("Histogram of Quantization Error");
 grid on;
 
 soundsc(y3bit, Musicfs);
+peakAmplitude = max(abs(MusicY));
+y_scaled = 4 *(MusicY / peakAmplitude);
 
-% Part G: Peak clipping experiment
+% Apply rounding quantization
 
-% Deliberately amplify the scaled signal so that many samples exceed
-% the quantizer input range [-1, 1]
-clippingGain = 4;
-y_pclip = clippingGain * y_scaled;
 
-% Apply the same 3-bit rounding quantizer
-y3bit_pclip = deltaQ * round(y_pclip / deltaQ);
+% Part G: 3-bit Level-1 uniform quantizer
 
-% Saturate the quantizer output to the range [-1, 1]
-y3bit_pclip(y3bit_pclip > 1) = 1;
-y3bit_pclip(y3bit_pclip < -1) = -1;
+numberOfBits = 3;
+numLevels = 2^numberOfBits; % 8 bins
+deltaQ = 2 / numLevels; % Delta = 0.25
 
-% Calculate the peak-clipping quantization error
-e_pclip = y_pclip - y3bit_pclip;
+% Level-1 mid-rise uniform quantization
+y3bit = deltaQ * (floor(y_scaled / deltaQ) + 0.5);
 
-% Find the samples that exceed the quantizer range
-clippedSamples = abs(y_pclip) > 1;
-numberOfClippedSamples = sum(clippedSamples);
-clippedPercentage = 100 * numberOfClippedSamples / length(y_pclip);
+% Saturate to the outer reconstruction levels
+y3bit(y3bit > 0.875) = 0.875;
+y3bit(y3bit < -0.875) = -0.875;
 
-fprintf("Clipping gain: %.1f\n", clippingGain);
-fprintf("Number of clipped samples: %d\n", numberOfClippedSamples);
-fprintf("Percentage of clipped samples: %.2f%%\n", clippedPercentage);
-
-% Plot the over-scaled and clipped signals
+e = y_scaled - y3bit;
 
 figure;
-
 subplot(2, 2, 1);
-plot(audioTime, y_pclip);
-hold on;
-yline(1, "r--", "Upper Limit");
-yline(-1, "r--", "Lower Limit");
-hold off;
-
-xlabel("Time (s)");
+plot( y_scaled);
+xlabel("samples");
 ylabel("Amplitude");
-title("Over-Scaled Speech Signal y_{pclip}");
+title("Scaled Speech Signal");
 grid on;
 
 subplot(2, 2, 2);
-histogram(y_pclip, 50);
-hold on;
-xline(1, "r--", "Upper Limit");
-xline(-1, "r--", "Lower Limit");
-hold off;
-
+histogram( y_scaled);
 xlabel("Amplitude");
 ylabel("Number of Samples");
-title("Histogram of y_{pclip}");
+title("Histogram of Scaled Speech Signal");
 grid on;
 
 subplot(2, 2, 3);
-plot(audioTime, y3bit_pclip);
-xlabel("Time (s)");
+plot( y3bit);
+xlabel("Samples");
 ylabel("Quantized Amplitude");
-title("3-Bit Peak-Clipped Quantized Signal");
+title("3-Bit Quantized Speech Signal");
 grid on;
-ylim([-1.2 1.2]);
 
 subplot(2, 2, 4);
-histogram(y3bit_pclip, 50);
+histogram(y3bit, 50);
 xlabel("Quantized Amplitude");
 ylabel("Number of Samples");
-title("Histogram of Peak-Clipped Quantized Signal");
+title("Histogram of 3-Bit Quantized Signal");
 grid on;
 
-sgtitle("Part G: Peak-Clipping Experiment");
-
-% Plot the peak-clipping error
-
 figure;
-
 subplot(2, 1, 1);
-plot(audioTime, e_pclip);
-xlabel("Time (s)");
+plot(e);
+xlabel("Samples");
 ylabel("Error");
-title("Peak-Clipping Error");
+title("Quantization Error: e = y_{scaled} - y_{3bit}");
 grid on;
 
 subplot(2, 1, 2);
-histogram(e_pclip, 50);
-xlabel("Error");
+histogram(e, 50);
+xlabel("Quantization Error");
 ylabel("Number of Samples");
-title("Histogram of Peak-Clipping Error");
+title("Histogram of Quantization Error");
 grid on;
-
-sgtitle("Part G: Error After Peak Clipping");
-% Listen to the peak-clipped quantized signal
-soundsc(y3bit_pclip, Musicfs);
