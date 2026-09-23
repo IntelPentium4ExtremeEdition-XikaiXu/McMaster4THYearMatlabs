@@ -210,17 +210,19 @@ y_scaled = MusicY / peakAmplitude;
 end
 
 
-numberOfBits = 3;
-numLevels = 2^numberOfBits;
-
-% Quantization step size for the interval [-1, 1]
-deltaQ = 2 / numLevels;
-
 % Apply rounding quantization
-y3bit = deltaQ * round(y_scaled / deltaQ);
+% Part F: 3-bit Level-1 uniform quantizer
 
-y3bit(y3bit > 1) = 1;
-y3bit(y3bit < -1) = -1;
+numberOfBits = 3;
+numLevels = 2^numberOfBits; % 8 levels
+deltaQ = 2 / numLevels; % Delta = 0.25
+
+% Level-1 mid-rise uniform quantization
+y3bit = deltaQ * (floor(y_scaled / deltaQ) + 0.5);
+
+% Saturate to the outer reconstruction levels
+y3bit(y3bit > 0.875) = 0.875;
+y3bit(y3bit < -0.875) = -0.875;
 
 
 e = y_scaled - y3bit;
